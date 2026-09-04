@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  comedytrail_db:
+    build:
+      context: ../mysql_comedy_trail
+      dockerfile: Dockerfile
+    container_name: ComedyTrail_Database
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    volumes:
+      - comedytrail_db_data:/var/lib/mysql
+      - ../mysql_comedy_trail/init-scripts:/docker-entrypoint-initdb.d
+    environment:
+      - MYSQL_ROOT_PASSWORD=comedytrail_root_secret
+      - MYSQL_DATABASE=comedytrail
+      - MYSQL_USER=comedytrail_user
+      - MYSQL_PASSWORD=comedytrail_secret
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "comedytrail_user", "-pcomedytrail_secret"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - comedy_trail_network
+
+  comedytrail_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ComedyTrail
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "5901:5901"
+    volumes:
+      - .:/var/www/comedytrail
+      - comedytrail_storage:/var/www/comedytrail/comedytrail-app/storage
+      - comedytrail_bootstrap_cache:/var/www/comedytrail/comedytrail-app/bootstrap/cache
+    environment:
+      - DB_HOST=ComedyTrail_Database
+      - DB_USER=comedytrail_user
+      - DB_PASSWORD=comedytrail_secret
+      - DB_NAME=comedytrail
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - USER=root
+      - DISPLAY=:1
+      - VNC_PORT=5901
+    depends_on:
+      comedytrail_db:
+        condition: service_healthy
+    privileged: true
+    stdin_open: true
+    tty: true
+    networks:
+      - comedy_trail_network
+
+volumes:
+  comedytrail_db_data:
+  comedytrail_storage:
+  comedytrail_bootstrap_cache:
+
+networks:
+  comedy_trail_network:
+    driver: bridge
