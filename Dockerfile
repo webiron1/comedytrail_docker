@@ -101,48 +101,48 @@ RUN chmod -f +x /root/.vnc/xstartup
 RUN touch /root/.Xauthority && chmod -f 600 /root/.Xauthority
 
 # Create Laravel Jetstream project structure
-RUN mkdir -p /var/www/comedytrail && \
-    cd /var/www/comedytrail && \
-    composer create-project laravel/laravel comedytrail-app
+#RUN mkdir -p /var/www/comedytrail && \
+#    cd /var/www/comedytrail && \
+#    composer create-project laravel/laravel comedytrail-app
 
 # Create .env file for Laravel
-RUN touch /var/www/comedytrail/comedytrail-app/.env && \
-    chown -Rf www-data:www-data /var/www/comedytrail/comedytrail-app && \
-    chmod -f 644 /var/www/comedytrail/comedytrail-app/.env
+#RUN touch /var/www/comedytrail/comedytrail-app/.env && \
+#   chown -Rf www-data:www-data /var/www/comedytrail/comedytrail-app && \
+#    chmod -f 644 /var/www/comedytrail/comedytrail-app/.env
 
-RUN cat > /var/www/comedytrail/comedytrail-app/.env <<'EOF'
-APP_NAME=ComedyTrail
-APP_ENV=production
-APP_KEY=
-APP_DEBUG=false
-APP_URL=http://localhost
+#RUN cat > /var/www/comedytrail/comedytrail-app/.env <<'EOF'
+#APP_NAME=ComedyTrail
+#APP_ENV=production
+#APP_KEY=
+#APP_DEBUG=false
+#APP_URL=http://localhost
+#
+#DB_CONNECTION=mysql
+##DB_HOST=ComedyTrail_Database
+#DB_HOST=172.18.0.2
+#DB_PORT=3306
+#DB_DATABASE=comedytrail
+#DB_USERNAME=comedytrail_user
+#DB_PASSWORD=comedytrail_secret
+#
+#CACHE_DRIVER=file
+#SESSION_DRIVER=file
+#EOF
 
-DB_CONNECTION=mysql
-#DB_HOST=ComedyTrail_Database
-DB_HOST=172.18.0.2
-DB_PORT=3306
-DB_DATABASE=comedytrail
-DB_USERNAME=comedytrail_user
-DB_PASSWORD=comedytrail_secret
+#RUN cd /var/www/comedytrail/comedytrail-app && \
+#    composer require laravel/jetstream && \
+#    php artisan jetstream:install livewire
 
-CACHE_DRIVER=file
-SESSION_DRIVER=file
-EOF
-
-RUN cd /var/www/comedytrail/comedytrail-app && \
-    composer require laravel/jetstream && \
-    php artisan jetstream:install livewire
-
-RUN cd /var/www/comedytrail/comedytrail-app && \
-    chown -Rf www-data:www-data /var/www/comedytrail && \
-    chmod -Rf 755 /var/www/comedytrail/comedytrail-app/storage && \
-    chmod -Rf 755 /var/www/comedytrail/comedytrail-app/bootstrap/cache
+#RUN cd /var/www/comedytrail/comedytrail-app && \
+#    chown -Rf www-data:www-data /var/www/comedytrail && \
+#    chmod -Rf 755 /var/www/comedytrail/comedytrail-app/storage && \
+#    chmod -Rf 755 /var/www/comedytrail/comedytrail-app/bootstrap/cache
 
 # Setup Laravel application: generate key, run migrations, set permissions
-RUN cd /var/www/comedytrail/comedytrail-app && \
-    php artisan key:generate && \
-    php artisan migrate --force || true && \
-    chown -Rf www-data:www-data /var/www/comedytrail
+#RUN cd /var/www/comedytrail/comedytrail-app && \
+#    php artisan key:generate && \
+#    php artisan migrate --force || true && \
+#    chown -Rf www-data:www-data /var/www/comedytrail
 
 # Install Firefox
 

@@ -14,8 +14,8 @@ services:
       - "5901:5901"
     volumes:
       - .:/var/www/comedytrail
-      - comedytrail_storage:/var/www/comedytrail/comedytrail-app/storage
-      - comedytrail_bootstrap_cache:/var/www/comedytrail/comedytrail-app/bootstrap/cache
+      #- comedytrail_storage:/var/www/comedytrail/comedytrail-app/storage
+      #- comedytrail_bootstrap_cache:/var/www/comedytrail/comedytrail-app/bootstrap/cache
     environment:
       - DB_HOST=ComedyTrail_Database
       - DB_USER=comedytrail_user
