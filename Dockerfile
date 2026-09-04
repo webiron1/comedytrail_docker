@@ -158,22 +158,9 @@ RUN cd /var/www/comedytrail/comedytrail-app && \
 RUN cat > /usr/local/bin/start-comedytrail.sh <<'EOF'
 #!/bin/bash
 echo "ComedyTrail Startup..."
-
-# Wait for database
-echo "Waiting for MySQL database..."
-for i in {1..30}; do
-    if mysql -h comedytrail_db -u comedytrail_user -pcomedytrail_secret -e "SELECT 1" &>/dev/null; then
-        echo "Database is ready!"
-        break
-    fi
-    echo "Waiting... ($i/30)"
-    sleep 1
-done
-
-# Start systemd
 exec /lib/systemd/systemd
 EOF
 
-RUN chmod -f +x /usr/local/bin/start-comedytrail.sh
+RUN chmod +x /usr/local/bin/start-comedytrail.sh
 
 ENTRYPOINT ["/usr/local/bin/start-comedytrail.sh"]
