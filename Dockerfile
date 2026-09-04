@@ -90,15 +90,21 @@ eval $(dbus-launch --sh-syntax)
 exec startxfce4
 EOF
 
-RUN chmod +x /root/.vnc/xstartup
+RUN chmod -f +x /root/.vnc/xstartup
 
 # Xauth and X11 setup
-RUN touch /root/.Xauthority && chmod 600 /root/.Xauthority
+RUN touch /root/.Xauthority && chmod -f 600 /root/.Xauthority
 
 # Create Laravel Jetstream project structure
 RUN mkdir -p /var/www/comedytrail/comedytrail-app && \
     cd /var/www/comedytrail && \
     composer create-project laravel/laravel comedytrail-app
+
+# Create .env file for Laravel
+RUN mkdir -p /var/www/comedytrail/comedytrail-app && \
+    touch /var/www/comedytrail/comedytrail-app/.env && \
+    chown -Rf www-data:www-data /var/www/comedytrail/comedytrail-app && \
+    chmod -f 644 /var/www/comedytrail/comedytrail-app/.env
 
 RUN cat > /var/www/comedytrail/comedytrail-app/.env <<'EOF'
 APP_NAME=ComedyTrail
@@ -124,21 +130,15 @@ RUN cd /var/www/comedytrail/comedytrail-app && \
     php artisan jetstream:install livewire
 
 RUN cd /var/www/comedytrail/comedytrail-app && \
-    chown -R www-data:www-data /var/www/comedytrail && \
-    chmod -R 755 /var/www/comedytrail/comedytrail-app/storage && \
-    chmod -R 755 /var/www/comedytrail/comedytrail-app/bootstrap/cache
+    chown -Rf www-data:www-data /var/www/comedytrail && \
+    chmod -Rf 755 /var/www/comedytrail/comedytrail-app/storage && \
+    chmod -Rf 755 /var/www/comedytrail/comedytrail-app/bootstrap/cache
 
 # Setup Laravel application: generate key, run migrations, set permissions
 RUN cd /var/www/comedytrail/comedytrail-app && \
     php artisan key:generate && \
     php artisan migrate --force || true && \
     chown -Rf www-data:www-data /var/www/comedytrail
-
-# Create .env file for Laravel
-RUN mkdir -p /var/www/comedytrail/comedytrail-app && \
-    touch /var/www/comedytrail/comedytrail-app/.env && \
-    chown -R www-data:www-data /var/www/comedytrail/comedytrail-app && \
-    chmod 644 /var/www/comedytrail/comedytrail-app/.env
 
 # Install Firefox
 
@@ -170,14 +170,10 @@ for i in {1..30}; do
     sleep 1
 done
 
-# Run migrations
-cd /var/www/comedytrail/comedytrail-app && \
-    php artisan migrate --force
-
 # Start systemd
 exec /lib/systemd/systemd
 EOF
 
-RUN chmod +x /usr/local/bin/start-comedytrail.sh
+RUN chmod -f +x /usr/local/bin/start-comedytrail.sh
 
 ENTRYPOINT ["/usr/local/bin/start-comedytrail.sh"]
