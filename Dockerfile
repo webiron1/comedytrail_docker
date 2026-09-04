@@ -7,7 +7,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV USER=root
 ENV DISPLAY=:1
 ENV VNC_PORT=5901
+
+# Set environment variables for language and encoding
 ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
 EXPOSE 80 443 5901
@@ -33,18 +36,17 @@ RUN apt update && \
     supervisor \
     mysql-client \
     nano vim \
-    unzip \
-    && locale-gen en_US.UTF-8 && \
-    apt clean && \
-    rm -rf /var/lib/apt/lists/* /lib/systemd/system-sleep/* /lib/systemd/system-generators/*
+    unzip
 
 # Install node
-RUN apt update && apt install -y nodejs npm && \
+RUN apt update && \
+    apt install -y --no-install-recommends \
+    nodejs npm && \
     npm install -g n && \
     n stable && \
-    apt purge -y nodejs npm && \
-    apt clean && \
-    rm -rf /var/lib/apt/lists/*
+    apt purge -y nodejs npm
+    
+RUN locale-gen en_US.UTF-8;
 
 # Mask services that don't work in containers
 RUN systemctl mask systemd-logind.service getty.target
@@ -106,7 +108,8 @@ APP_DEBUG=false
 APP_URL=http://localhost
 
 DB_CONNECTION=mysql
-DB_HOST=comedytrail_db
+#DB_HOST=ComedyTrail_Database
+DB_HOST=172.18.0.2
 DB_PORT=3306
 DB_DATABASE=comedytrail
 DB_USERNAME=comedytrail_user
@@ -129,7 +132,7 @@ RUN cd /var/www/comedytrail/comedytrail-app && \
 RUN cd /var/www/comedytrail/comedytrail-app && \
     php artisan key:generate && \
     php artisan migrate --force || true && \
-    chown -R www-data:www-data /var/www/comedytrail
+    chown -Rf www-data:www-data /var/www/comedytrail
 
 # Create .env file for Laravel
 RUN mkdir -p /var/www/comedytrail/comedytrail-app && \
