@@ -125,6 +125,9 @@ COPY resources/firefox/firefox_installer.sh /tmp/firefox_installer.sh
 RUN chmod +x /tmp/firefox_installer.sh
 RUN /tmp/firefox_installer.sh
 
+# Now remove the installer and tar file
+RUN rm -rf /tmp/firefox_installer.sh /tmp/firefox.tgz
+
 # Copy entrypoint script
 COPY start-comedytrail.sh /usr/local/bin/start-comedytrail.sh
 RUN chmod +x /usr/local/bin/start-comedytrail.sh
