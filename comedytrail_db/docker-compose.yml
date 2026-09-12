@@ -3,7 +3,7 @@ version: '3.8'
 services:
   comedytrail_db:
     build:
-      context: ../mysql_comedy_trail
+      context: ../comedytrail_db
       dockerfile: Dockerfile
     container_name: ComedyTrail_Database
     restart: unless-stopped
@@ -26,7 +26,6 @@ services:
       - comedy_trail_network
 
   comedytrail_app:
-    image: comedytrail_app:0.1
     build:
       context: .
       dockerfile: Dockerfile

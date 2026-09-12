@@ -13,11 +13,11 @@ ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
-EXPOSE 80 443 5901
+EXPOSE 80 443 5901 22
 
 WORKDIR /var/www/comedytrail
 
-# Install system dependencies: Ubuntu base, Nginx, PHP, VNC, Xfce Desktop, Firefox
+# Install system dependencies: Ubuntu base, Nginx, PHP, VNC, Xfce Desktop, Firefox, SSH
 RUN apt update && \
     apt install -y --no-install-recommends \
     systemd systemd-sysv \
@@ -28,6 +28,7 @@ RUN apt update && \
     git \
     curl wget \
     locales \
+    openssh-server openssh-client \
     tightvncserver \
     xfonts-base xfonts-encodings xfonts-75dpi \
     xauth x11-xserver-utils \
@@ -50,6 +51,13 @@ RUN locale-gen en_US.UTF-8;
 
 # Mask services that don't work in containers
 RUN systemctl mask systemd-logind.service getty.target
+
+# Configure SSH
+RUN mkdir -p /run/sshd && \
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+    echo 'root:comedytrail' | chpasswd && \
+    systemctl enable ssh
 
 # Configure Nginx for Laravel
 RUN printf 'server {\n    listen 80 default_server;\n    listen [::]:80 default_server;\n    listen 443 ssl http2 default_server;\n    listen [::]:443 ssl http2 default_server;\n    \n    server_name _;\n    root /var/www/comedytrail/comedytrail-app/public;\n    index index.php index.html;\n    \n    ssl_certificate /etc/ssl/certs/comedytrail.crt;\n    ssl_certificate_key /etc/ssl/private/comedytrail.key;\n    \n    location ~ \\.php$ {\n        fastcgi_pass unix:/run/php/php-fpm.sock;\n        fastcgi_index index.php;\n        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n        include fastcgi_params;\n    }\n    \n    location / {\n        try_files $uri $uri/ /index.php?$query_string;\n    }\n    \n    location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {\n        expires 1y;\n        add_header Cache-Control "public, immutable";\n    }\n}\n' > /etc/nginx/sites-available/comedytrail.conf && \

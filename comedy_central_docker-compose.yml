@@ -3,7 +3,7 @@ version: '3.8'
 services:
   comedytrail_db:
     build:
-      context: ../mysql_comedy_trail
+      context: ./comedytrail_db
       dockerfile: Dockerfile
     container_name: ComedyTrail_Database
     restart: unless-stopped
@@ -26,9 +26,8 @@ services:
       - comedy_trail_network
 
   comedytrail_app:
-    image: comedytrail_app:0.1
     build:
-      context: .
+      context: ./ComedyTrail
       dockerfile: Dockerfile
     container_name: ComedyTrail
     restart: unless-stopped
@@ -36,16 +35,13 @@ services:
       - "80:80"
       - "443:443"
       - "5901:5901"
-      - "2222:22"
     volumes:
       # Source code - full Laravel app for development (from Herd)
       - C:/Users/douga/Herd/comedytrail:/var/www/comedytrail
       # Storage volume - Laravel storage directory
       - C:/Users/douga/Herd/comedytrail/storage/comedytrail_storage:/var/www/comedytrail/storage
       # Cache directory
-      - C:/Users/douga/Herd/comedytrail/bootstrap/cache:/var/www/comedytrail/bootstrap/cache
-      # Temp folder shared between host and container
-      - C:/Docker_Storage/comedytrail/temp:/temp
+      - C:\Users\douga\Herd\comedytrail\bootstrap\cache:/var/www/comedytrail/bootstrap/cache
     environment:
       - DB_HOST=comedytrail_db
       - DB_USER=comedytrail_user
@@ -53,9 +49,6 @@ services:
       - DB_NAME=comedytrail
       - APP_ENV=production
       - APP_DEBUG=false
-      - USER=root
-      - DISPLAY=:1
-      - VNC_PORT=5901
     depends_on:
       comedytrail_db:
         condition: service_healthy
