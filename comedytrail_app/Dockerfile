@@ -1,7 +1,7 @@
 FROM ubuntu:24.04
 
 LABEL maintainer="doug.ashbaugh@outlook.com"
-LABEL description="ComedyTrail Application - Ubuntu 24.04 LTS with Nginx, Laravel Jetstream, VNC, Gnome Desktop, Firefox"
+LABEL description="ComedyTrail Application - Ubuntu 24.04 LTS with Nginx, Laravel Jetstream, VNC, Xfce Desktop, Firefox"
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV USER=root
@@ -40,7 +40,8 @@ RUN apt update && \
     supervisor \
     mysql-client \
     nano vim \
-    unzip
+    unzip \
+    pulseaudio
 
 # Install Node.js using n
 RUN apt update && \
@@ -111,11 +112,21 @@ RUN chmod -f +x /root/.vnc/xstartup
 # Xauth and X11 setup
 RUN touch /root/.Xauthority && chmod -f 600 /root/.Xauthority
 
+# Copy bash aliases into root folder.
+COPY resources/bash/.bash_aliases /root/.bash_aliases
+
+# Install FireFox Prerequisites
+RUN apt update && apt install -y libgtk-3-0 libdbus-glib-1-2 libx11-xcb1 libxt6 libasound2t64 libdbus-glib-1-2
+
+# Copy FireFox image to the container
+RUN mkdir -p /opt && mkdir -p /temp
+COPY resources/firefox/firefox.tgz /temp
+COPY resources/firefox/firefox_installer.sh /temp/firefox_installer.sh
+RUN chmod +x /temp/firefox_installer.sh
+RUN /temp/firefox_installer.sh
+
 # Copy entrypoint script
 COPY start-comedytrail.sh /usr/local/bin/start-comedytrail.sh
 RUN chmod +x /usr/local/bin/start-comedytrail.sh
-
-# Copy bash aliases into root folder.
-COPY resources/bash_aliases /root/.bash_aliases
 
 ENTRYPOINT ["/usr/local/bin/start-comedytrail.sh"]

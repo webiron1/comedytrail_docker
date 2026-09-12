@@ -50,7 +50,9 @@ services:
       # Cache directory
       - C:/Users/douga/Herd/comedytrail/bootstrap/cache:/var/www/comedytrail/bootstrap/cache
       # Temp folder shared between host and container
-      - C:/Docker_Storage/comedytrail/temp:/temp
+      - C:/Docker_Projects/comedytrail/temp:/temp
+      # PulseAudio socket for audio output to host speakers
+      - /run/user/1000/pulse:/run/user/1000/pulse
     environment:
       - DB_HOST=comedytrail_db
       - DB_USER=comedytrail_user
@@ -61,6 +63,7 @@ services:
       - USER=root
       - DISPLAY=:1
       - VNC_PORT=5901
+      - PULSE_SERVER=/run/user/1000/pulse/native
     depends_on:
       comedytrail_db:
         condition: service_healthy
