@@ -26,7 +26,7 @@ RUN apt update && \
     systemd systemd-sysv \
     nginx \
     php8.4 php8.4-cli php8.4-fpm php8.4-mysql php8.4-pdo php8.4-xml php8.4-curl php8.4-mbstring php8.4-zip php8.4-bcmath \
-    php8.4-dev \
+    php8.4-dev php8.4-xdebug \
     composer \
     git \
     curl wget \
@@ -114,5 +114,8 @@ RUN touch /root/.Xauthority && chmod -f 600 /root/.Xauthority
 # Copy entrypoint script
 COPY start-comedytrail.sh /usr/local/bin/start-comedytrail.sh
 RUN chmod +x /usr/local/bin/start-comedytrail.sh
+
+# Copy bash aliases into root folder.
+COPY resources/bash_aliases /root/.bash_aliases
 
 ENTRYPOINT ["/usr/local/bin/start-comedytrail.sh"]

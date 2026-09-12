@@ -33,10 +33,15 @@ services:
     container_name: ComedyTrail
     restart: unless-stopped
     ports:
+      # Web server ports
       - "80:80"
       - "443:443"
+      # VNC port for GUI access
       - "5901:5901"
+      # SSH port for remote access
       - "2222:22"
+      # Xdebug and Laravel Telescope ports for debugging
+      - "9003:9003"
     volumes:
       # Source code - full Laravel app for development (from Herd)
       - C:/Users/douga/Herd/comedytrail:/var/www/comedytrail
