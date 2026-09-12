@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  comedytrail_db:
+    build:
+      context: ../comedytrail_db
+      dockerfile: Dockerfile
+    container_name: ComedyTrail_Database
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    volumes:
+      - C:/Docker_Databases/comedytrail_db:/var/lib/mysql
+      - ../comedytrail_db/init-scripts:/docker-entrypoint-initdb.d
+    environment:
+      - MYSQL_ROOT_PASSWORD=comedytrail_root_secret
+      - MYSQL_DATABASE=comedytrail
+      - MYSQL_USER=comedytrail_user
+      - MYSQL_PASSWORD=comedytrail_secret
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "comedytrail_user", "-pcomedytrail_secret"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - comedy_trail_network
+
+  comedytrail_app:
+    image: comedytrail_app:0.1
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ComedyTrail
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "5901:5901"
+      - "2222:22"
+    volumes:
+      # Source code - full Laravel app for development (from Herd)
+      - C:/Users/douga/Herd/comedytrail:/var/www/comedytrail
+      # Storage volume - Laravel storage directory
+      - C:/Users/douga/Herd/comedytrail/storage/comedytrail_storage:/var/www/comedytrail/storage
+      # Cache directory
+      - C:/Users/douga/Herd/comedytrail/bootstrap/cache:/var/www/comedytrail/bootstrap/cache
+      # Temp folder shared between host and container
+      - C:/Docker_Storage/comedytrail/temp:/temp
+    environment:
+      - DB_HOST=comedytrail_db
+      - DB_USER=comedytrail_user
+      - DB_PASSWORD=comedytrail_secret
+      - DB_NAME=comedytrail
+      - APP_ENV=development
+      - APP_DEBUG=true
+      - USER=root
+      - DISPLAY=:1
+      - VNC_PORT=5901
+    depends_on:
+      comedytrail_db:
+        condition: service_healthy
+    privileged: true
+    stdin_open: true
+    tty: true
+    networks:
+      - comedy_trail_network
+
+volumes:
+  comedytrail_db_data:
+
+networks:
+  comedy_trail_network:
+    driver: bridge
