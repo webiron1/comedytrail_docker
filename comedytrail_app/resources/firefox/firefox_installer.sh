@@ -3,7 +3,7 @@
 
 set -x
 
-cd /temp
+cd /tmp
 
 # Uncomment clearing old firefox for reinstall test of this script.
 rm -rf /opt/firefox
@@ -25,10 +25,7 @@ if [ ! -d /opt ]; then
         mkdir -p /opt
 fi
 
-# Install firefox from the tar file in /tmp/firefox.tar
-cd /temp
-
-tar xvf firefox.tar -C /opt
+tar xzvf firefox.tgz -C /opt
 chmod +x /opt/firefox/firefox*
 chmod +x /opt/firefox/*test*
 

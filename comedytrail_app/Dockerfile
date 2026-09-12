@@ -119,11 +119,11 @@ COPY resources/bash/.bash_aliases /root/.bash_aliases
 RUN apt update && apt install -y libgtk-3-0 libdbus-glib-1-2 libx11-xcb1 libxt6 libasound2t64 libdbus-glib-1-2
 
 # Copy FireFox image to the container
-RUN mkdir -p /opt && mkdir -p /temp
-COPY resources/firefox/firefox.tgz /temp
-COPY resources/firefox/firefox_installer.sh /temp/firefox_installer.sh
-RUN chmod +x /temp/firefox_installer.sh
-RUN /temp/firefox_installer.sh
+RUN mkdir -p /opt && mkdir -p /tmp
+COPY resources/firefox/firefox.tgz /tmp
+COPY resources/firefox/firefox_installer.sh /tmp/firefox_installer.sh
+RUN chmod +x /tmp/firefox_installer.sh
+RUN /tmp/firefox_installer.sh
 
 # Copy entrypoint script
 COPY start-comedytrail.sh /usr/local/bin/start-comedytrail.sh
