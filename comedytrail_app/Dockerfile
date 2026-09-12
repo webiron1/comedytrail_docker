@@ -62,7 +62,7 @@ RUN mkdir -p /run/sshd && \
 # Configure Nginx for Laravel
 RUN printf 'server {\n    listen 80 default_server;\n    listen [::]:80 default_server;\n    listen 443 ssl http2 default_server;\n    listen [::]:443 ssl http2 default_server;\n    \n    server_name _;\n    root /var/www/comedytrail/public;\n    index index.php index.html;\n    \n    ssl_certificate /etc/ssl/certs/comedytrail.crt;\n    ssl_certificate_key /etc/ssl/private/comedytrail.key;\n    \n    location ~ \\.php$ {\n        fastcgi_pass unix:/run/php/php-fpm.sock;\n        fastcgi_index index.php;\n        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n        include fastcgi_params;\n    }\n    \n    location / {\n        try_files $uri $uri/ /index.php?$query_string;\n    }\n    \n    location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {\n        expires 1y;\n        add_header Cache-Control "public, immutable";\n    }\n}\n' > /etc/nginx/sites-available/comedytrail.conf && \
     rm -f /etc/nginx/sites-enabled/default && \
-    ln -sf /etc/nginx/sites-available/comedytrail.conf /etc/nginx/sites-enabled/ && \
+    rm -f /etc/nginx/sites-enabled/default.conf && \
     ln -sf /etc/nginx/sites-available/comedytrail.conf /etc/nginx/sites-enabled/default.conf
 
 # Generate self-signed SSL certificate
