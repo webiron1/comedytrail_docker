@@ -17,13 +17,16 @@ EXPOSE 80 443 5901 22
 
 WORKDIR /var/www/comedytrail
 
-# Install system dependencies: Ubuntu base, Nginx, PHP, VNC, Xfce Desktop, Firefox, SSH
+# Install system dependencies: Ubuntu base, Nginx, PHP 8.4, VNC, Xfce Desktop, Firefox, SSH
 RUN apt update && \
+    apt install -y --no-install-recommends software-properties-common && \
+    add-apt-repository -y ppa:ondrej/php && \
+    apt update && \
     apt install -y --no-install-recommends \
     systemd systemd-sysv \
     nginx \
-    php php-cli php-fpm php-mysql php-pdo php-xml php-curl php-mbstring php-zip php-bcmath \
-    php-dev \
+    php8.4 php8.4-cli php8.4-fpm php8.4-mysql php8.4-pdo php8.4-xml php8.4-curl php8.4-mbstring php8.4-zip php8.4-bcmath \
+    php8.4-dev \
     composer \
     git \
     curl wget \
@@ -50,7 +53,7 @@ RUN apt update && \
 RUN locale-gen en_US.UTF-8;
 
 # Mask services that don't work in containers
-RUN systemctl mask systemd-logind.service getty.target
+RUN systemctl mask systemd-logind.service getty.target php8.3-fpm.service php8.4-fpm.service
 
 # Configure SSH
 RUN mkdir -p /run/sshd && \
@@ -59,8 +62,8 @@ RUN mkdir -p /run/sshd && \
     echo 'root:comedytrail' | chpasswd && \
     systemctl enable ssh
 
-# Configure Nginx for Laravel
-RUN printf 'server {\n    listen 80 default_server;\n    listen [::]:80 default_server;\n    listen 443 ssl http2 default_server;\n    listen [::]:443 ssl http2 default_server;\n    \n    server_name _;\n    root /var/www/comedytrail/public;\n    index index.php index.html;\n    \n    ssl_certificate /etc/ssl/certs/comedytrail.crt;\n    ssl_certificate_key /etc/ssl/private/comedytrail.key;\n    \n    location ~ \\.php$ {\n        fastcgi_pass unix:/run/php/php-fpm.sock;\n        fastcgi_index index.php;\n        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n        include fastcgi_params;\n    }\n    \n    location / {\n        try_files $uri $uri/ /index.php?$query_string;\n    }\n    \n    location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {\n        expires 1y;\n        add_header Cache-Control "public, immutable";\n    }\n}\n' > /etc/nginx/sites-available/comedytrail.conf && \
+# Configure Nginx for Laravel with PHP 8.4-FPM
+RUN printf 'server {\n    listen 80 default_server;\n    listen [::]:80 default_server;\n    listen 443 ssl http2 default_server;\n    listen [::]:443 ssl http2 default_server;\n    \n    server_name _;\n    root /var/www/comedytrail/public;\n    index index.php index.html;\n    \n    ssl_certificate /etc/ssl/certs/comedytrail.crt;\n    ssl_certificate_key /etc/ssl/private/comedytrail.key;\n    \n    location ~ \\.php$ {\n        fastcgi_pass unix:/run/php/php8.4-fpm.sock;\n        fastcgi_index index.php;\n        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n        include fastcgi_params;\n    }\n    \n    location / {\n        try_files $uri $uri/ /index.php?$query_string;\n    }\n    \n    location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {\n        expires 1y;\n        add_header Cache-Control "public, immutable";\n    }\n}\n' > /etc/nginx/sites-available/comedytrail.conf && \
     rm -f /etc/nginx/sites-enabled/default && \
     rm -f /etc/nginx/sites-enabled/default.conf && \
     ln -sf /etc/nginx/sites-available/comedytrail.conf /etc/nginx/sites-enabled/default.conf
@@ -77,10 +80,10 @@ RUN mkdir -p /etc/systemd/system && \
 RUN printf '[Unit]\nDescription=Xfce4 Desktop Environment\nAfter=tightvnc.service\n\n[Service]\nType=simple\nUser=root\nEnvironment="DISPLAY=:1"\nExecStart=/usr/bin/startxfce4\nRestart=on-failure\nRestartSec=3\n\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/xfce-session.service
 
 # Create Nginx service
-RUN printf '[Unit]\nDescription=Nginx Web Server\nAfter=network.target\n\n[Service]\nType=simple\nUser=www-data\nExecStart=/usr/sbin/nginx -g "daemon off;"\nExecReload=/bin/kill -s HUP $MAINPID\nExecStop=/bin/kill -s QUIT $MAINPID\nRestart=on-failure\nRestartSec=3\n\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/nginx.service
+RUN printf '[Unit]\nDescription=Nginx Web Server\nAfter=network.target\n\n[Service]\nType=simple\nPIDFile=/var/run/nginx.pid\nExecStart=/usr/sbin/nginx -g "daemon off;"\nExecReload=/bin/kill -s HUP $MAINPID\nExecStop=/bin/kill -s QUIT $MAINPID\nKillMode=process\nRestart=on-failure\nRestartSec=3\n\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/nginx.service
 
 # Create PHP-FPM service
-RUN printf '[Unit]\nDescription=PHP FastCGI Process Manager\nAfter=network.target\n\n[Service]\nType=simple\nExecStart=/usr/sbin/php-fpm8.3 -F -O\nRestart=on-failure\nRestartSec=3\n\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/php-fpm.service
+RUN printf '[Unit]\nDescription=PHP 8.4 FastCGI Process Manager\nAfter=network.target\n\n[Service]\nType=simple\nExecStart=/usr/sbin/php-fpm8.4 -F\nRestart=on-failure\nRestartSec=3\n\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/php-fpm.service
 
 # Enable services
 RUN systemctl enable tightvnc.service xfce-session.service nginx.service php-fpm.service
