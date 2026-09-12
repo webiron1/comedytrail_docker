@@ -90,7 +90,7 @@ RUN mkdir -p /root/.vnc && \
     echo "comedytrail" | vncpasswd -f > /root/.vnc/passwd && \
     chmod 600 /root/.vnc/passwd
 
-# Misc Permissions - Needed elese nginx does not start
+# Misc Permissions - Needed else nginx does not start
 RUN chmod -f 777 /run
 
 RUN cat > /root/.vnc/xstartup <<'EOF'
@@ -108,111 +108,8 @@ RUN chmod -f +x /root/.vnc/xstartup
 # Xauth and X11 setup
 RUN touch /root/.Xauthority && chmod -f 600 /root/.Xauthority
 
-# Create Laravel Jetstream project structure
-#RUN mkdir -p /var/www/comedytrail && \
-#    cd /var/www/comedytrail && \
-#    composer create-project laravel/laravel comedytrail-app
-
-# Create .env file for Laravel
-#RUN touch /var/www/comedytrail/comedytrail-app/.env && \
-#   chown -Rf www-data:www-data /var/www/comedytrail/comedytrail-app && \
-#    chmod -f 644 /var/www/comedytrail/comedytrail-app/.env
-
-#RUN cat > /var/www/comedytrail/comedytrail-app/.env <<'EOF'
-#APP_NAME=ComedyTrail
-#APP_ENV=production
-#APP_KEY=
-#APP_DEBUG=false
-#APP_URL=http://localhost
-#
-#DB_CONNECTION=mysql
-##DB_HOST=ComedyTrail_Database
-#DB_HOST=172.18.0.2
-#DB_PORT=3306
-#DB_DATABASE=comedytrail
-#DB_USERNAME=comedytrail_user
-#DB_PASSWORD=comedytrail_secret
-#
-#CACHE_DRIVER=file
-#SESSION_DRIVER=file
-#EOF
-
-#RUN cd /var/www/comedytrail/comedytrail-app && \
-#    composer require laravel/jetstream && \
-#    php artisan jetstream:install livewire
-
-#RUN cd /var/www/comedytrail/comedytrail-app && \
-#    chown -Rf www-data:www-data /var/www/comedytrail && \
-#    chmod -Rf 755 /var/www/comedytrail/comedytrail-app/storage && \
-#    chmod -Rf 755 /var/www/comedytrail/comedytrail-app/bootstrap/cache
-
-# Setup Laravel application: generate key, run migrations, set permissions
-#RUN cd /var/www/comedytrail/comedytrail-app && \
-#    php artisan key:generate && \
-#    php artisan migrate --force || true && \
-#    chown -Rf www-data:www-data /var/www/comedytrail
-
-# Install Firefox
-
-# Download the latest Firefox Linux 64-bit binary
-#RUN curl -L "https://mozilla.org" -o firefox-latest.tar.bz2
-
-# Extract the archive directly to the /opt directory
-#RUN tar -jxvf firefox-latest.tar.bz2 -C /opt/
-
-# Remove the downloaded archive file
-#RUN rm cd /tmp && firefox-latest.tar.bz2
-
-# Create a symbolic link to the Firefox binary in /usr/local/bin for easy access
-#RUN ln -s /opt/firefox/firefox /usr/local/bin/firefox
-
-# Entrypoint script - CORRECTED VERSION
-RUN cat > /usr/local/bin/start-comedytrail.sh <<'BASHEOF'
-#!/bin/bash
-set -e
-
-echo "========================================"
-echo "ComedyTrail Container Startup"
-echo "========================================"
-
-# Wait for MySQL database
-echo ""
-echo "Waiting for MySQL database..."
-MAX_ATTEMPTS=3
-ATTEMPT=1
-
-while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
-    if mysql --host=comedytrail_db --user=comedytrail_user --password=comedytrail_secret -e "SELECT 1" &>/dev/null; then
-        echo "[OK] Database comedytrail_db is ready!"
-        break
-    fi
-    echo "  [Attempt $ATTEMPT/$MAX_ATTEMPTS] Retrying in 1 second..."
-    sleep 1
-    ATTEMPT=$((ATTEMPT + 1))
-done
-
-if [ $ATTEMPT -gt $MAX_ATTEMPTS ]; then
-    echo "[WARNING] Database connection failed after $MAX_ATTEMPTS attempts"
-    echo "Continuing startup anyway..."
-fi
-
-# Run Laravel migrations if app exists
-if [ -d "/var/www/comedytrail/comedytrail-app" ]; then
-    echo ""
-    echo "Running Laravel migrations..."
-    cd /var/www/comedytrail/comedytrail-app
-    php artisan migrate --force 2>/dev/null || echo "[INFO] Migrations skipped or already run"
-fi
-
-echo ""
-echo "========================================"
-echo "Starting systemd (PID 1)..."
-echo "========================================"
-echo ""
-
-exec /lib/systemd/systemd
-BASHEOF
-
+# Copy entrypoint script
+COPY start-comedytrail.sh /usr/local/bin/start-comedytrail.sh
 RUN chmod +x /usr/local/bin/start-comedytrail.sh
 
 ENTRYPOINT ["/usr/local/bin/start-comedytrail.sh"]
