@@ -68,8 +68,8 @@ RUN mkdir -p /run/sshd && \
     echo 'root:comedytrail' | chpasswd && \
     systemctl enable ssh
 
-# Configure Nginx for Laravel with PHP 8.4-FPM
-RUN printf 'server {\n    listen 80 default_server;\n    listen [::]:80 default_server;\n    listen 443 ssl http2 default_server;\n    listen [::]:443 ssl http2 default_server;\n    \n    server_name _;\n    root /var/www/comedytrail/public;\n    index index.php index.html;\n    \n    ssl_certificate /etc/ssl/certs/comedytrail.crt;\n    ssl_certificate_key /etc/ssl/private/comedytrail.key;\n    \n    location ~ \\.php$ {\n        fastcgi_pass unix:/run/php/php8.4-fpm.sock;\n        fastcgi_index index.php;\n        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n        include fastcgi_params;\n    }\n    \n    location / {\n        try_files $uri $uri/ /index.php?$query_string;\n    }\n    \n    location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {\n        expires 1y;\n        add_header Cache-Control "public, immutable";\n    }\n}\n' > /etc/nginx/sites-available/comedytrail.conf && \
+# Configure Nginx for Laravel with PHP 8.4-FPM and gzip compression
+RUN printf 'server {\n    listen 80 default_server;\n    listen [::]:80 default_server;\n    listen 443 ssl http2 default_server;\n    listen [::]:443 ssl http2 default_server;\n    \n    server_name _;\n    root /var/www/comedytrail/public;\n    index index.php index.html;\n    \n    gzip on;\n    gzip_vary on;\n    gzip_comp_level 6;\n    gzip_types text/plain text/css text/xml text/javascript application/json application/javascript application/xml+rss application/rss+xml;\n    \n    ssl_certificate /etc/ssl/certs/comedytrail.crt;\n    ssl_certificate_key /etc/ssl/private/comedytrail.key;\n    \n    location ~ \\.php$ {\n        fastcgi_pass unix:/run/php/php8.4-fpm.sock;\n        fastcgi_index index.php;\n        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n        include fastcgi_params;\n    }\n    \n    location / {\n        try_files $uri $uri/ /index.php?$query_string;\n    }\n    \n    location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {\n        expires 1y;\n        add_header Cache-Control "public, immutable";\n    }\n}\n' > /etc/nginx/sites-available/comedytrail.conf && \
     rm -f /etc/nginx/sites-enabled/default && \
     rm -f /etc/nginx/sites-enabled/default.conf && \
     ln -sf /etc/nginx/sites-available/comedytrail.conf /etc/nginx/sites-enabled/default.conf
@@ -77,6 +77,9 @@ RUN printf 'server {\n    listen 80 default_server;\n    listen [::]:80 default_
 # Generate self-signed SSL certificate
 RUN mkdir -p /etc/ssl/certs /etc/ssl/private && \
     openssl req -x509 -newkey rsa:2048 -keyout /etc/ssl/private/comedytrail.key -out /etc/ssl/certs/comedytrail.crt -days 365 -nodes -subj "/C=US/ST=State/L=City/O=Organization/CN=comedytrail"
+
+# Create Nginx FastCGI cache directory
+RUN mkdir -p /var/cache/nginx && chmod -R 755 /var/cache/nginx
 
 # Create VNC startup service
 RUN mkdir -p /etc/systemd/system && \
@@ -90,6 +93,12 @@ RUN printf '[Unit]\nDescription=Nginx Web Server\nAfter=network.target\n\n[Servi
 
 # Create PHP-FPM service
 RUN printf '[Unit]\nDescription=PHP 8.4 FastCGI Process Manager\nAfter=network.target\n\n[Service]\nType=simple\nExecStart=/usr/sbin/php-fpm8.4 -F\nRestart=on-failure\nRestartSec=3\n\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/php-fpm.service
+
+# Optimize PHP-FPM worker pool for better concurrency
+RUN sed -i 's/pm.max_children = 5/pm.max_children = 20/' /etc/php/8.4/fpm/pool.d/www.conf && \
+    sed -i 's/pm.start_servers = 2/pm.start_servers = 5/' /etc/php/8.4/fpm/pool.d/www.conf && \
+    sed -i 's/pm.min_spare_servers = 1/pm.min_spare_servers = 3/' /etc/php/8.4/fpm/pool.d/www.conf && \
+    sed -i 's/pm.max_spare_servers = 3/pm.max_spare_servers = 10/' /etc/php/8.4/fpm/pool.d/www.conf
 
 # Enable services
 RUN systemctl enable tightvnc.service xfce-session.service nginx.service php-fpm.service
@@ -138,9 +147,9 @@ COPY start-comedytrail.sh /usr/local/bin/start-comedytrail.sh
 RUN chmod +x /usr/local/bin/start-comedytrail.sh
 
 # BACKEND BUILD - Run Composer Install for PHP AssetsA
-RUN cd /var/www/comedytrail && composer install --no-interaction --optimize-autoloader
+# RUN cd /var/www/comedytrail && composer install --no-interaction --optimize-autoloader
 
 # FRONTEND BUILD - Install fontain font support for Vue font optimization and build Vue assets
-RUN cd /var/www/comedytrail && npm install --save-dev fontaine && npm run build
+# RUN cd /var/www/comedytrail && npm install --save-dev fontaine && npm run build
 
 ENTRYPOINT ["/usr/local/bin/start-comedytrail.sh"]
