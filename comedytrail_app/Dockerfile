@@ -137,7 +137,10 @@ RUN rm -rf /tmp/firefox_installer.sh /tmp/firefox.tgz
 COPY start-comedytrail.sh /usr/local/bin/start-comedytrail.sh
 RUN chmod +x /usr/local/bin/start-comedytrail.sh
 
-# Install fontain font support for Vue font optimization and build Vue assets
+# BACKEND BUILD - Run Composer Install for PHP AssetsA
+RUN cd /var/www/comedytrail && composer install --no-interaction --optimize-autoloader
+
+# FRONTEND BUILD - Install fontain font support for Vue font optimization and build Vue assets
 RUN cd /var/www/comedytrail && npm install --save-dev fontaine && npm run build
 
 ENTRYPOINT ["/usr/local/bin/start-comedytrail.sh"]
