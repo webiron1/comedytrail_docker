@@ -43,6 +43,11 @@ RUN apt update && \
     unzip \
     pulseaudio
 
+# Update composer to latest version
+RUN rm -f /usr/bin/composer && \
+    rm -f /usr/local/bin/composer && \
+    curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
+
 # Install Node.js using n
 RUN apt update && \
     apt install -y --no-install-recommends \
