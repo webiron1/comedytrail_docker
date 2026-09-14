@@ -27,10 +27,10 @@ if [ $ATTEMPT -gt $MAX_ATTEMPTS ]; then
 fi
 
 #BACKEND BUILD - Run Composer Install for PHP AssetsA
-cd /var/www/comedytrail && composer install --no-interaction --optimize-autoloader
+#cd /var/www/comedytrail && composer install --no-interaction --optimize-autoloader
 
 #FRONTEND BUILD - Install fontain font support for Vue font optimization and build Vue assets
-cd /var/www/comedytrail && npm install --save-dev fontaine && npm run build
+#cd /var/www/comedytrail && npm install --save-dev fontaine && npm run build
 
 echo ""
 echo "========================================"
